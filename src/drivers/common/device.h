@@ -48,7 +48,6 @@ struct dev_module {
 	void  *dev_priv;
 
 	const struct file_operations *fops;
-	int (*init) (void);
 };
 
 extern struct dev_module *dev_module_create(struct device *dev,
