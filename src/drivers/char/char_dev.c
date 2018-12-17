@@ -47,6 +47,16 @@ int char_dev_idesc_fstat(struct idesc *idesc, void *buff) {
 	return 0;
 }
 
+#if 0
+static struct idesc *char_dev_open(struct node *node, struct file_desc *file_desc, int flags) {
+	struct dev_module *dev = node->nas->node_fi;
+}
+
+static struct file_operations char_file_ops = {
+	.open = char_dev_open,
+};
+#endif
+
 int char_dev_register(const char *name, const struct file_operations *ops) {
 	struct path  node;
 	struct nas *dev_nas;
