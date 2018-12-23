@@ -47,6 +47,10 @@ int main(int argc, char **argv) {
 		}
 	}
 
+	if (argc < i + 4) {
+		print_error();
+		return -EINVAL;
+	}
 	busn = strtol(argv[i++], NULL, 0);
 	chip_addr = strtol(argv[i++], NULL, 0);
 	data_addr = strtol(argv[i++], NULL, 0);
