@@ -97,5 +97,5 @@ static const struct dev_module vc_dev = {
 };
 
 static int vc_init(void) {
-	return char_dev_register(VC_DEV_NAME, NULL, &vc_dev);
+	return char_dev_register(&vc_dev);
 }
