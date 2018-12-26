@@ -23,10 +23,10 @@
 ARRAY_SPREAD_DEF(const struct dev_module, __device_registry);
 
 int char_dev_init_all(void) {
-	const struct dev_module *dev_module;
+	const struct dev_module *cdev;
 
-	array_spread_foreach_ptr(dev_module, __device_registry) {
-		char_dev_register(dev_module->name, dev_module->fops, dev_module);
+	array_spread_foreach_ptr(cdev, __device_registry) {
+		char_dev_register(cdev);
 	}
 
 	return 0;
@@ -45,9 +45,9 @@ int char_dev_idesc_fstat(struct idesc *idesc, void *buff) {
 	return 0;
 }
 
+#if 0
 static struct idesc *char_dev_open(struct node *node, struct file_desc *file_desc, int flags) {
 	struct dev_module *dev = node->nas->fi->privdata;
-	int ret;
 
 	if (!dev) {
 		log_error("Can't open char device");
@@ -56,24 +56,20 @@ static struct idesc *char_dev_open(struct node *node, struct file_desc *file_des
 
 	dev->d_idesc = &file_desc->idesc;
 
-	if (dev->device->dev_dops->open != NULL) {
-		ret = dev->device->dev_dops->open(dev, NULL);
-		if (ret != 0) {
-			return err_ptr(ret);
+	if (dev->open != NULL) {
+		if (dev->open(dev, dev->dev_priv)) {
+			log_error("Failed to open %s", dev->name);
+			return NULL;
 		}
 	}
 
-	file_desc->idesc.idesc_ops = dev->device->dev_iops;
+	file_desc->idesc.idesc_ops = dev->dev_iops;
 
 	return &file_desc->idesc;
 }
+#endif
 
-static struct file_operations char_file_ops = {
-	.open = char_dev_open,
-};
-
-int char_dev_register(const char *name, const struct file_operations *ops,
-		const struct dev_module *dev_module) {
+int char_dev_register(const struct dev_module *cdev) {
 	struct path  node;
 	struct nas *dev_nas;
 
@@ -85,7 +81,7 @@ int char_dev_register(const char *name, const struct file_operations *ops,
 		return -ENODEV;
 	}
 
-	vfs_create_child(&node, name, S_IFCHR | S_IRALL | S_IWALL, &node);
+	vfs_create_child(&node, cdev->name, S_IFCHR | S_IRALL | S_IWALL, &node);
 	if (!(node.node)) {
 		return -1;
 	}
@@ -96,8 +92,8 @@ int char_dev_register(const char *name, const struct file_operations *ops,
 		return -ENOMEM;
 	}
 
-	dev_nas->fs->file_op = ops ? ops : &char_file_ops;
-	node.node->nas->fi->privdata = (void *) dev_module;
+	//dev_nas->fs->file_op = ops ? ops : &char_file_ops;
+	node.node->nas->fi->privdata = (void *) cdev;
 
 	return 0;
 }
