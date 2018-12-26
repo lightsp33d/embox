@@ -62,7 +62,7 @@ int ttys_register(const char *name, void *dev_info) {
 	memset(cdev, 0, sizeof(*cdev));
 	memcpy(cdev->name, name, sizeof(cdev->name));
 	cdev->dev_priv = dev_info;
-	cdev->dev_file.f_ops = &ttys_fops;
+	// cdev->dev_file.f_ops = &ttys_fops;
 
 	return char_dev_register(cdev);
 }
