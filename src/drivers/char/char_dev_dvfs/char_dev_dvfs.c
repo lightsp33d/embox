@@ -43,9 +43,9 @@ int char_dev_register(struct dev_module *cdev) {
 	devtab[cdev_id] = cdev;
 	cdev->dev_id = cdev_id;
 
-	if (cdev->dev_file.f_ops == NULL) {
-		cdev->dev_file.f_ops = &char_dev_fops;
-	}
+	// if (cdev->dev_file.f_ops == NULL) {
+	// 	cdev->dev_file.f_ops = &char_dev_fops;
+	// }
 
 	return 0;
 }
@@ -63,6 +63,7 @@ int char_dev_idesc_fstat(struct idesc *idesc, void *buff) {
 	return 0;
 }
 
+#if 0
 static struct idesc *char_dev_open(struct inode *node, struct idesc *idesc) {
 	struct dev_module *devmod = node->i_data;
 
@@ -85,3 +86,4 @@ static struct idesc *char_dev_open(struct inode *node, struct idesc *idesc) {
 struct file_operations char_dev_fops = {
 	.open = char_dev_open,
 };
+#endif
