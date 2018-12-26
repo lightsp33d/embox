@@ -22,35 +22,28 @@
 #define STATIC_DEVMOD_ID -1
 
 struct device;
-struct dev_module;
-struct dev_operations;
 struct idesc;
-struct file;
 struct idesc_ops;
-
-struct device {
-	const struct dev_operations *dev_dops;
-	const struct idesc_ops *dev_iops;
-};
-
-struct dev_operations {
-	int  (*open)   (struct dev_module *mod, void *dev_priv);
-	int  (*probe)  (struct dev_module *mod, void *dev_priv);
-	void (*remove) (struct dev_module *mod);
-};
 
 struct dev_module {
 	int    dev_id;
 	char   name[DEV_NAME_LEN];
-	struct device *device;
 	struct idesc *d_idesc;
 	void  *dev_priv;
+	
+	const struct idesc_ops *dev_iops;
 
-	const struct file_operations *fops;
+	struct idesc *(*open)  (struct dev_module *, void *);
+	int 		  (*close) (struct idesc *);
 };
 
-extern struct dev_module *dev_module_create(struct device *dev,
-	const char *name, void *privdata);
+extern struct dev_module *dev_module_create(
+	const struct idesc_ops *dev_iops,
+	struct idesc *(*open) (struct dev_module *, void *),
+	int (*close) (struct idesc *),
+	const char *name,
+	void *privdata
+);
 
 extern int dev_module_destroy(struct dev_module *dev);
 
