@@ -43,4 +43,4 @@ static const struct idesc_ops null_ops = {
 	.fstat     = char_dev_idesc_fstat,
 };
 
-CHAR_DEV_DEF(NULL_DEV_NAME, NULL, &null_ops, NULL);
+CHAR_DEV_DEF(NULL_DEV_NAME, NULL, NULL, &null_ops, NULL);
