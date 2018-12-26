@@ -11,6 +11,7 @@
 
 #include <fs/idesc.h>
 #include <drivers/device.h>
+#include <util/array.h>
 
 #define CHAR_DEV_DEF(chname, open_fn, close_fn, idesc_op, priv) \
 	ARRAY_SPREAD_DECLARE(const struct dev_module, __device_registry); \
@@ -23,7 +24,7 @@
 			 })
 
 extern int char_dev_init_all(void);
-extern int char_dev_register(struct dev_module *cdev);
+extern int char_dev_register(const struct dev_module *cdev);
 extern int char_dev_idesc_fstat(struct idesc *idesc, void *buff);
 
 #endif /* DEVICE_H_ */
