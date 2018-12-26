@@ -58,4 +58,4 @@ static const struct idesc_ops zero_ops = {
 	.fstat     = char_dev_idesc_fstat,
 };
 
-CHAR_DEV_DEF(ZERO_DEV_NAME, NULL, &zero_ops, NULL);
+CHAR_DEV_DEF(ZERO_DEV_NAME, NULL, NULL, &zero_ops, NULL);
