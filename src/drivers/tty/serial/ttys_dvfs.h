@@ -22,6 +22,6 @@ struct tty_uart {
 extern int ttys_open(struct dev_module *mod, void *dev_priv);
 
 #define TTYS_DEF(name, uart) \
-		CHAR_DEV_DEF(name, &ttys_open, NULL, uart)
+		CHAR_DEV_DEF(name, &ttys_open, NULL, NULL, uart)
 
 #endif /* TTYS_H_ */
