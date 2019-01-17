@@ -45,8 +45,8 @@ int char_dev_idesc_fstat(struct idesc *idesc, void *buff) {
 	return 0;
 }
 
-#if 0
-static struct idesc *char_dev_open(struct node *node, struct file_desc *file_desc, int flags) {
+#if 1
+struct idesc *char_dev_open(struct node *node, int flags) {
 	struct dev_module *dev = node->nas->fi->privdata;
 
 	if (!dev) {
@@ -54,23 +54,16 @@ static struct idesc *char_dev_open(struct node *node, struct file_desc *file_des
 		return NULL;
 	}
 
-	dev->d_idesc = &file_desc->idesc;
-
 	if (dev->open != NULL) {
-		if (dev->open(dev, dev->dev_priv)) {
-			log_error("Failed to open %s", dev->name);
-			return NULL;
-		}
+		return dev->open(dev, dev->dev_priv);
 	}
 
-	file_desc->idesc.idesc_ops = dev->dev_iops;
-
-	return &file_desc->idesc;
+	return NULL;
 }
 #endif
 
 int char_dev_register(const struct dev_module *cdev) {
-	struct path  node;
+	struct path node;
 	struct nas *dev_nas;
 
 	if (vfs_lookup("/dev", &node)) {
@@ -87,7 +80,7 @@ int char_dev_register(const struct dev_module *cdev) {
 	}
 
 	dev_nas = node.node->nas;
-	dev_nas->fs = filesystem_create("empty");
+	dev_nas->fs = filesystem_create("devfs");
 	if (dev_nas->fs == NULL) {
 		return -ENOMEM;
 	}
