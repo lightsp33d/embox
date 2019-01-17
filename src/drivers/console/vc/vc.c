@@ -88,12 +88,8 @@ static const struct idesc_ops idesc_vc_ops = {
 
 static const struct dev_module vc_dev = {
 	.name = VC_DEV_NAME,
-	.device = &(struct device) {
-		.dev_iops = &idesc_vc_ops,
-		.dev_dops = &(struct dev_operations) {
-			.open = vc_open,
-		},
-	},
+	.dev_ops = &idesc_vc_ops,
+	.open = vc_open,
 };
 
 static int vc_init(void) {
