@@ -16,8 +16,6 @@
 
 #include <util/err.h>
 
-#include <drivers/char_dev.h>
-
 #define ZERO_DEV_NAME "zero"
 
 static void zero_close(struct idesc *desc) {
@@ -58,4 +56,12 @@ static const struct idesc_ops zero_ops = {
 	.fstat     = char_dev_idesc_fstat,
 };
 
-CHAR_DEV_DEF(ZERO_DEV_NAME, NULL, NULL, &zero_ops, NULL);
+static struct idesc zero_idesc = {
+	.idesc_ops = &zero_ops
+};
+
+static struct idesc * zero_open(struct dev_module *cdev, void *priv) {
+	return &zero_idesc;
+}
+
+CHAR_DEV_DEF(ZERO_DEV_NAME, zero_open, NULL, &zero_ops, NULL);
