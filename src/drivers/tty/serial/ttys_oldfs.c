@@ -22,7 +22,8 @@
 #include <util/err.h>
 
 #if 0
-static struct idesc *uart_fsop_open(struct node *node, struct file_desc *file_desc, int flags)  {
+static struct idesc *uart_fsop_open(struct node *node,
+									struct file_desc *file_desc, int flags)  {
 	struct uart *uart;
 	struct idesc *idesc;
 	int res;
@@ -43,12 +44,31 @@ static struct idesc *uart_fsop_open(struct node *node, struct file_desc *file_de
 	return idesc;
 }
 
-/*
 const struct file_operations ttys_fops = {
 	.open = uart_fsop_open,
 };
-*/
 #endif
+
+static struct idesc *uart_cdev_open(struct dev_module *cdev, void *flags) {
+	struct uart *uart;
+	struct idesc *idesc;
+	int res;
+
+	uart = uart_dev_lookup(cdev->name);
+	if (!uart) {
+		return err_ptr(ENOENT);
+	}
+	idesc = idesc_serial_create(uart, *((int *)flags));
+	if (err(idesc)) {
+		return idesc;
+	}
+	res = uart_open(uart);
+	if (res) {
+		return err_ptr(-res);
+	}
+
+	return idesc;
+}
 
 #define SERIAL_POOL_SIZE OPTION_GET(NUMBER, serial_quantity)
 POOL_DEF(cdev_serials_pool, struct dev_module, SERIAL_POOL_SIZE);
@@ -63,6 +83,7 @@ int ttys_register(const char*name, void *dev_info) {
 	memset(cdev, 0, sizeof(*cdev));
 	memcpy(cdev->name, name, sizeof(cdev->name));
 	cdev->dev_priv = dev_info;
+	cdev->open = uart_cdev_open;
 
 	return char_dev_register(cdev);
 }
