@@ -73,7 +73,7 @@ static struct idesc *uart_cdev_open(struct dev_module *cdev, void *flags) {
 #define SERIAL_POOL_SIZE OPTION_GET(NUMBER, serial_quantity)
 POOL_DEF(cdev_serials_pool, struct dev_module, SERIAL_POOL_SIZE);
 
-int ttys_register(const char*name, void *dev_info) {
+int ttys_register(const char *name, void *dev_info) {
 	struct dev_module *cdev;
 
 	cdev = pool_alloc(&cdev_serials_pool);
@@ -82,8 +82,8 @@ int ttys_register(const char*name, void *dev_info) {
 	}
 	memset(cdev, 0, sizeof(*cdev));
 	memcpy(cdev->name, name, sizeof(cdev->name));
-	cdev->dev_priv = dev_info;
 	cdev->open = uart_cdev_open;
+	cdev->dev_priv = dev_info;
 
 	return char_dev_register(cdev);
 }
