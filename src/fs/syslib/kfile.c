@@ -28,6 +28,8 @@
 
 extern struct node *kcreat(struct path *dir, const char *path, mode_t mode);
 
+extern struct idesc *char_dev_open(struct node *node, int flags);
+
 struct idesc *kopen(struct node *node, int flag) {
 	struct nas *nas;
 	struct file_desc *desc;
@@ -42,20 +44,24 @@ struct idesc *kopen(struct node *node, int flag) {
 
 	nas = node->nas;
 	/* if we try open a file (not special) we must have the file system */
-	if (NULL == nas->fs ) {
+	if (NULL == nas->fs) {
 		SET_ERRNO(ENOSUPP);
 		return NULL;
 	}
 
-	if (!(node_is_directory(node)) && !(node_is_file(node))) {
+	if (node_is_directory(node)) {
+		ops = nas->fs->file_op;
+	} else {
 		if (NULL == nas->fs->drv) {
 			SET_ERRNO(ENOSUPP);
 			return NULL;
 		}
-		extern struct idesc *char_dev_open(struct node *node, int flags);
-		return char_dev_open(node, flag);
-	} else {
-		ops = nas->fs->file_op;
+
+		if (!node_is_file(node)) {
+			return char_dev_open(node, flag);
+		}
+		
+		ops = nas->fs->drv->file_op;
 	}
 
 	if(ops == NULL) {
