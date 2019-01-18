@@ -19,8 +19,13 @@
 #include <util/array.h>
 #include <util/err.h>
 #include <util/log.h>
+#include <mem/misc/pool.h>
+
+#define MAX_DEV_QUANTITY OPTION_GET(NUMBER, dev_quantity)
+POOL_DEF(cdev_standard_pool, struct idesc, MAX_DEV_QUANTITY);
 
 ARRAY_SPREAD_DEF(const struct dev_module, __device_registry);
+
 
 int char_dev_init_all(void) {
 	const struct dev_module *cdev;
@@ -45,23 +50,31 @@ int char_dev_idesc_fstat(struct idesc *idesc, void *buff) {
 	return 0;
 }
 
-#if 1
-struct idesc *char_dev_open(struct node *node, int flags) {
-	struct dev_module *dev = node->nas->fi->privdata;
+int cdev_idesc_alloc(struct dev_module *cdev) {
+	cdev->d_idesc = pool_alloc(&cdev_standard_pool);
+	if (!cdev->d_idesc) {
+		return -ENOMEM;
+	}
 
-	if (!dev) {
+	return 0;
+}
+
+struct idesc *char_dev_open(struct node *node, int flags) {
+	struct dev_module *cdev = node->nas->fi->privdata;
+
+	if (!cdev) {
 		log_error("Can't open char device");
 		return NULL;
 	}
 
-	if (dev->open != NULL) {
-		log_error("No open function for char device");
-		return dev->open(dev, dev->dev_priv);
+	if (cdev->open != NULL) {
+		log_error("No open function for char device %s",
+				  cdev->name ? cdev->name : "");
+		return cdev->open(cdev, cdev->dev_priv);
 	}
 
 	return NULL;
 }
-#endif
 
 int char_dev_register(const struct dev_module *cdev) {
 	struct path node;

@@ -27,5 +27,6 @@
 extern int char_dev_init_all(void);
 extern int char_dev_register(const struct dev_module *cdev);
 extern int char_dev_idesc_fstat(struct idesc *idesc, void *buff);
+extern int cdev_idesc_alloc(struct dev_module *cdev);
 
 #endif /* DEVICE_H_ */
