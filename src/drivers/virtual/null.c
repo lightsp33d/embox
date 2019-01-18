@@ -43,15 +43,11 @@ static const struct idesc_ops null_ops = {
 	.fstat     = char_dev_idesc_fstat,
 };
 
+static struct idesc null_idesc;
+
 static struct idesc * null_open(struct dev_module *cdev, void *priv) {
-	assert(cdev);
-
-	if(cdev->d_idesc == NULL) {
-		cdev_idesc_alloc(cdev);
-		idesc_init(cdev->d_idesc, &null_ops, S_IROTH | S_IWOTH);
-	}
-
-	return cdev->d_idesc;
+	idesc_init(&null_idesc, &null_ops, S_IROTH | S_IWOTH);
+	return &null_idesc;
 }
 
 CHAR_DEV_DEF(NULL_DEV_NAME, null_open, NULL, &null_ops, NULL);
