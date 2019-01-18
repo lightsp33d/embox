@@ -32,10 +32,10 @@ INDEX_DEF(dev_module_idx, 0, MAX_DEV_MODULE_COUNT);
  * @return
  */
 struct dev_module *dev_module_create(
-	const struct idesc_ops *dev_iops,
-	struct idesc *(*open) (struct dev_module *, void *),
-	int (*close) (struct idesc *),
 	const char *name,
+	struct idesc * (*open)  (struct dev_module *, void *),
+	int 		   (*close) (struct idesc *),
+	const struct idesc_ops *dev_iops,
 	void *privdata
 ) {
 	struct dev_module *devmod;
@@ -62,10 +62,10 @@ struct dev_module *dev_module_create(
 	strncpy(devmod->name, name, DEV_NAME_LEN);
 	devmod->name[DEV_NAME_LEN - 1] = '\0';
 	//dvfs_traling_slash_trim(devmod->name);
-	devmod->dev_priv = privdata;
 	devmod->dev_iops = dev_iops;
 	devmod->open = open;
 	devmod->close = close;
+	devmod->dev_priv = privdata;
 
 	return devmod;
 }

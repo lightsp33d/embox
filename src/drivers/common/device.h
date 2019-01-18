@@ -28,19 +28,20 @@ struct dev_module {
 	int    dev_id;
 	char   name[DEV_NAME_LEN];
 	struct idesc *d_idesc;
-	void  *dev_priv;
-	
+
 	const struct idesc_ops *dev_iops;
 
 	struct idesc *(*open)  (struct dev_module *, void *);
 	int 		  (*close) (struct idesc *);
+
+	void  *dev_priv;
 };
 
 extern struct dev_module *dev_module_create(
-	const struct idesc_ops *dev_iops,
-	struct idesc *(*open) (struct dev_module *, void *),
-	int (*close) (struct idesc *),
 	const char *name,
+	struct idesc * (*open)  (struct dev_module *, void *),
+	int 		   (*close) (struct idesc *),
+	const struct idesc_ops *dev_iops,
 	void *privdata
 );
 
