@@ -37,10 +37,21 @@ static ssize_t null_read(struct idesc *desc, const struct iovec *iov, int cnt) {
 }
 
 static const struct idesc_ops null_ops = {
-	.close = null_close,
-	.id_readv = null_read,
+	.id_readv  = null_read,
 	.id_writev = null_write,
+	.close     = null_close,
 	.fstat     = char_dev_idesc_fstat,
 };
 
-CHAR_DEV_DEF(NULL_DEV_NAME, NULL, NULL, &null_ops, NULL);
+static struct idesc * null_open(struct dev_module *cdev, void *priv) {
+	assert(cdev);
+
+	if(cdev->d_idesc == NULL) {
+		cdev_idesc_alloc(cdev);
+		idesc_init(cdev->d_idesc, &null_ops, S_IROTH | S_IWOTH);
+	}
+
+	return cdev->d_idesc;
+}
+
+CHAR_DEV_DEF(NULL_DEV_NAME, null_open, NULL, &null_ops, NULL);
