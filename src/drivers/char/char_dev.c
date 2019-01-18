@@ -55,6 +55,7 @@ struct idesc *char_dev_open(struct node *node, int flags) {
 	}
 
 	if (dev->open != NULL) {
+		log_error("No open function for char device");
 		return dev->open(dev, dev->dev_priv);
 	}
 
