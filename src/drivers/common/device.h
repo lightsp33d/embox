@@ -21,7 +21,6 @@
 
 #define STATIC_DEVMOD_ID -1
 
-struct device;
 struct idesc;
 struct idesc_ops;
 
