@@ -22,7 +22,7 @@
 #include <mem/misc/pool.h>
 
 #define MAX_DEV_QUANTITY OPTION_GET(NUMBER, dev_quantity)
-POOL_DEF(cdev_standard_pool, struct idesc, MAX_DEV_QUANTITY);
+POOL_DEF(cdev_idesc_pool, struct idesc, MAX_DEV_QUANTITY);
 
 ARRAY_SPREAD_DEF(const struct dev_module, __device_registry);
 
@@ -50,17 +50,9 @@ int char_dev_idesc_fstat(struct idesc *idesc, void *buff) {
 	return 0;
 }
 
-int cdev_idesc_alloc(struct dev_module *cdev) {
-	cdev->d_idesc = pool_alloc(&cdev_standard_pool);
-	if (!cdev->d_idesc) {
-		return -ENOMEM;
-	}
-
-	return 0;
-}
-
 struct idesc *char_dev_open(struct node *node, int flags) {
 	struct dev_module *cdev = node->nas->fi->privdata;
+	struct idesc *idesc;
 
 	if (!cdev) {
 		log_error("Can't open char device");
@@ -68,12 +60,18 @@ struct idesc *char_dev_open(struct node *node, int flags) {
 	}
 
 	if (cdev->open != NULL) {
-		log_error("No open function for char device %s",
-				  cdev->name ? cdev->name : "");
-		return cdev->open(cdev, cdev->dev_priv);
+		idesc = cdev->open(cdev, cdev->dev_priv);
+		return idesc;
 	}
 
-	return NULL;
+	idesc = pool_alloc(&cdev_idesc_pool);
+	if (idesc == NULL) {
+		log_error("Can't allocate char device");
+		return NULL;
+	}
+
+	idesc_init(idesc, cdev->dev_iops, S_IROTH | S_IWOTH);
+	return idesc;
 }
 
 int char_dev_register(const struct dev_module *cdev) {
