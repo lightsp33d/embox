@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <string.h>
 
+#include <mem/misc/pool.h>
 #include <util/array.h>
 #include <util/dlist.h>
 #include <util/indexator.h>
@@ -18,6 +19,9 @@
 #include <drivers/char_dev.h>
 
 #define MAX_DEV_QUANTITY OPTION_GET(NUMBER, dev_quantity)
+
+#define CDEV_IDESC_POOL_SIZE OPTION_GET(NUMBER, cdev_idesc_quantity)
+POOL_DEF(cdev_idesc_pool, struct idesc, CDEV_IDESC_POOL_SIZE);
 
 static struct dev_module *devtab[MAX_DEV_QUANTITY];
 INDEX_DEF(char_dev_idx, 0, MAX_DEV_QUANTITY);
@@ -43,10 +47,6 @@ int char_dev_register(struct dev_module *cdev) {
 	devtab[cdev_id] = cdev;
 	cdev->dev_id = cdev_id;
 
-	// if (cdev->dev_file.f_ops == NULL) {
-	// 	cdev->dev_file.f_ops = &char_dev_fops;
-	// }
-
 	return 0;
 }
 
@@ -63,27 +63,41 @@ int char_dev_idesc_fstat(struct idesc *idesc, void *buff) {
 	return 0;
 }
 
-#if 0
 static struct idesc *char_dev_open(struct inode *node, struct idesc *idesc) {
-	struct dev_module *devmod = node->i_data;
+	struct dev_module *cdev = node->i_data;
+	struct idesc *idesc;
 
-	devmod->dev_file.f_inode = node;
+	if (!cdev) {
+		log_error("Can't open char device");
+		return NULL;
+	}
 
+	if (cdev->open != NULL) {
+		idesc = cdev->open(cdev, cdev->dev_priv);
+		return idesc;
+	}
+
+	idesc = pool_alloc(&cdev_idesc_pool);
+	if (idesc == NULL) {
+		log_error("Can't allocate char device");
+		return NULL;
+	}
+	
+	idesc_init(idesc, cdev->dev_iops, S_IROTH | S_IWOTH);
+	return idesc;
+	
 	/* Perform device-specific initialization if neccessary.
 	 *
 	 * Generally it should be symmetrics with idesc_close(), but
 	 * idesc ops has no open(), so we need to "imitate" opening like that */
-	if (devmod->device && devmod->device->dev_dops && devmod->device->dev_dops->open) {
-		if (devmod->device->dev_dops->open(devmod, devmod->dev_priv)) {
+	/*
+	if (devmod->open) {
+		if (devmod->open(devmod, devmod->dev_priv)) {
 			log_error("Failed to open %s", devmod->name);
 			return NULL;
 		}
 	}
 
-	return &devmod->dev_file.f_idesc;
+	return ;
+	*/
 }
-
-struct file_operations char_dev_fops = {
-	.open = char_dev_open,
-};
-#endif
