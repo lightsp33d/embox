@@ -24,9 +24,20 @@
 			.close = close_fn, \
 			 })
 
+struct idesc_dev {
+	struct idesc idesc;
+	struct dev_module *dev;
+};
+
 extern int char_dev_init_all(void);
 extern int char_dev_register(const struct dev_module *cdev);
 extern int char_dev_idesc_fstat(struct idesc *idesc, void *buff);
 extern int cdev_idesc_alloc(struct dev_module *cdev);
+
+static inline struct dev_module *idesc_to_dev_module(struct idesc *desc) {
+	struct idesc_dev *idev = mcast_out(desc, struct idesc_dev, idesc);
+
+	return idev->dev;
+}
 
 #endif /* DEVICE_H_ */

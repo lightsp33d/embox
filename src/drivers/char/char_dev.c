@@ -53,14 +53,19 @@ int char_dev_idesc_fstat(struct idesc *idesc, void *buff) {
 struct idesc *char_dev_open(struct node *node, int flags) {
 	struct dev_module *cdev = node->nas->fi->privdata;
 	struct idesc *idesc;
+	struct idesc_dev *idev;
 
 	if (!cdev) {
 		log_error("Can't open char device");
 		return NULL;
 	}
 
+	idev = pool_alloc(&idev_pool);
+
 	if (cdev->open != NULL) {
 		idesc = cdev->open(cdev, cdev->dev_priv);
+		idev->idesc = *idesc;
+		idev->dev = cdev;
 		return idesc;
 	}
 
@@ -71,6 +76,9 @@ struct idesc *char_dev_open(struct node *node, int flags) {
 	}
 
 	idesc_init(idesc, cdev->dev_iops, S_IROTH | S_IWOTH);
+	idev->idesc = *idesc;
+	idev->dev = cdev;
+
 	return idesc;
 }
 
