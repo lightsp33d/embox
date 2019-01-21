@@ -24,13 +24,12 @@
 			 })
 
 extern int char_dev_register(struct dev_module *cdev);
+extern int char_dev_idesc_fstat(struct idesc *idesc, void *buff);
 
 static inline struct dev_module *idesc_to_dev_module(struct idesc *desc) {
 	struct file *f = mcast_out(desc, struct file, f_idesc);
 
-	return mcast_out(f, struct dev_module, dev_file);
+	return (struct dev_module *) f->f_inode->i_data;
 }
-
-extern int char_dev_idesc_fstat(struct idesc *idesc, void *buff);
 
 #endif /* CHAR_DEV_DVFS_H_ */
