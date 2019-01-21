@@ -59,7 +59,7 @@ static const struct idesc_ops zero_ops = {
 
 static struct idesc zero_idesc;
 
-static struct idesc * zero_open(struct dev_module *cdev, void *priv) {
+static struct idesc *zero_open(struct dev_module *cdev, void *priv) {
 	idesc_init(&zero_idesc, &zero_ops, S_IROTH | S_IWOTH);
 	return &zero_idesc;
 }
