@@ -21,8 +21,9 @@
 #include <util/log.h>
 #include <mem/misc/pool.h>
 
-#define MAX_DEV_QUANTITY OPTION_GET(NUMBER, dev_quantity)
-POOL_DEF(cdev_idesc_pool, struct idesc, MAX_DEV_QUANTITY);
+#define CDEV_IDESC_POOL_SIZE OPTION_GET(NUMBER, cdev_idesc_quantity)
+POOL_DEF(cdev_idesc_pool, struct idesc, CDEV_IDESC_POOL_SIZE);
+POOL_DEF(idev_pool, struct idesc_dev, CDEV_IDESC_POOL_SIZE);
 
 ARRAY_SPREAD_DEF(const struct dev_module, __device_registry);
 
