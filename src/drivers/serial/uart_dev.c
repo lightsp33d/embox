@@ -79,6 +79,7 @@ static int uart_setup(struct uart *uart) {
 }
 
 extern int ttys_register(const char*name, void *dev_info);
+
 int uart_register(struct uart *uart,
 		const struct uart_params *uart_defparams) {
 
