@@ -27,7 +27,6 @@ struct idesc_ops;
 struct dev_module {
 	int    dev_id;
 	char   name[DEV_NAME_LEN];
-	struct idesc *d_idesc;
 
 	const struct idesc_ops *dev_iops;
 
