@@ -14,7 +14,8 @@
 
 #include <util/err.h>
 #include <embox/unit.h>
-#include <fs/vfs.h>
+#include <fs/vfs.h>		/* redundant? */
+#include <fs/dvfs.h>
 
 #include <mem/page.h>
 #include <mem/misc/pool.h>
