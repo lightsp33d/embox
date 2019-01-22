@@ -72,10 +72,10 @@ int char_dev_idesc_fstat(struct idesc *idesc, void *buff) {
 
 	return 0;
 }
-
+#if 0
 static struct idesc *char_dev_open(struct inode *node, struct idesc *idesc) {
 	struct dev_module *cdev = node->i_data;
-	struct idesc *idesc;
+	// struct idesc *idesc;
 
 	if (!cdev) {
 		log_error("Can't open char device");
@@ -111,3 +111,4 @@ static struct idesc *char_dev_open(struct inode *node, struct idesc *idesc) {
 	return ;
 	*/
 }
+#endif
