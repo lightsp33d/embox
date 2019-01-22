@@ -49,7 +49,7 @@ void devfs_fill_inode(struct inode *inode,
 
 	inode->i_data = devmod;
 	inode->flags |= flags;
-	devmod->dev_file.f_inode = inode;
+	// devmod->dev_file.f_inode = inode;
 }
 
 ARRAY_SPREAD_DECLARE(const struct dev_module, __char_device_registry);
