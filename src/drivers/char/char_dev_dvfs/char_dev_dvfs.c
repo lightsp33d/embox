@@ -32,6 +32,16 @@ struct dev_module **get_cdev_tab(void) {
 	return &devtab[0];
 }
 
+int char_dev_init_all(void) {
+	struct dev_module *cdev;
+
+	array_spread_foreach_ptr(cdev, __char_device_registry) {
+		char_dev_register(cdev);
+	}
+
+	return 0;
+}
+
 int char_dev_register(struct dev_module *cdev) {
 	int cdev_id;
 

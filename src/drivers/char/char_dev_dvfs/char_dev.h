@@ -23,6 +23,7 @@
 			.close = close_fn, \
 			 })
 
+extern int char_dev_init_all(void);
 extern int char_dev_register(struct dev_module *cdev);
 extern int char_dev_idesc_fstat(struct idesc *idesc, void *buff);
 
