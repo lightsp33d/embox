@@ -14,6 +14,7 @@
 #include <fs/dvfs.h>
 
 extern struct idesc_ops idesc_bdev_ops;
+/*
 extern struct file_operations bdev_dev_ops;
 
 static struct dev_operations block_device_operations = {
@@ -25,6 +26,7 @@ static struct device block_device = {
 	.dev_dops = &block_device_operations,
 	.dev_iops = &idesc_bdev_ops,
 };
+*/
 
 /**
  * @brief Create node in devfs
@@ -57,9 +59,9 @@ struct block_dev *block_dev_create(const char *path, void *driver, void *privdat
 	if (NULL == (bdev = block_dev_create_common(dvfs_last_link(path), driver, privdata)))
 		return NULL;
 
-	devmod = dev_module_create(&block_device, dvfs_last_link(path), bdev);
-	bdev->dev_ops = &bdev_dev_ops;
-	devmod->dev_file.f_ops = &bdev_dev_ops;
+	devmod = dev_module_create(bdev->name, NULL, NULL, &idesc_bdev_ops, bdev);
+	// bdev->dev_ops = &bdev_dev_ops;
+	// devmod->dev_file.f_ops = &bdev_dev_ops;
 	bdev->dev_module = devmod;
 
 	return bdev;
