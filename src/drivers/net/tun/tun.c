@@ -17,18 +17,21 @@
 #include <net/l3/arp.h>
 #include <embox/unit.h>
 #include <util/err.h>
+#include <mem/misc/pool.h>
 
 #include <kernel/thread/sync/mutex.h>
 #include <kernel/sched/sched_lock.h>
 #include <drivers/char_dev.h> //XXX
 #include <fs/node.h>
 #include <fs/file_desc.h>
-#include <fs/file_operation.h>
+#include <fs/idesc.h>
 #include <kernel/sched/waitq.h>
 #include <kernel/thread/thread_sched_wait.h>
 #include <kernel/thread.h>
 
 #define TUN_N 1
+
+POOL_DEF(cdev_tun_pool, struct dev_module, TUN_N);
 
 EMBOX_UNIT_INIT(tun_init);
 
@@ -93,17 +96,16 @@ static int tun_setup(struct net_device *dev) {
 	return 0;
 }
 
-static struct idesc *tun_dev_open(struct node *node,
-	struct file_desc *file_desc, int flags);
-static int    tun_dev_close(struct file_desc *desc);
-static size_t tun_dev_read(struct file_desc *desc, void *buf, size_t size);
-static size_t tun_dev_write(struct file_desc *desc, void *buf, size_t size);
-static const struct file_operations tun_dev_file_ops = {
-	.open  = tun_dev_open,
-	.read  = tun_dev_read,
-	.write = tun_dev_write,
+static struct idesc *tun_dev_open(struct dev_module *cdev, void *priv);
+static void    tun_dev_close(struct idesc *idesc);
+static ssize_t tun_dev_read(struct idesc *idesc, const struct iovec *iov, int cnt);
+static ssize_t tun_dev_write(struct idesc *idesc, const struct iovec *iov, int cnt);
+static const struct idesc_ops tun_iops = {
+	.id_readv  = tun_dev_read,
+	.id_writev = tun_dev_write,
 	.close = tun_dev_close,
 };
+static struct idesc tun_idesc;
 
 static inline struct net_device *tun_netdev_by_name(const char *name) {
 	int i;
@@ -114,14 +116,17 @@ static inline struct net_device *tun_netdev_by_name(const char *name) {
 	}
 	return NULL;
 }
-
+/*
 static inline struct net_device *tun_netdev_by_node(const struct node *node) {
 	return tun_netdev_by_name(node->name);
 }
-
-static inline int tun_netdev_by_desc(const struct file_desc *fdesc,
+*/
+static inline int tun_netdev_by_idesc(struct idesc *idesc,
 		struct net_device **netdev, struct tun **tun) {
-	*netdev = fdesc->file_info;
+	struct dev_module *cdev;
+
+	cdev = idesc_to_dev_module(idesc);
+	*netdev = cdev->dev_priv;
 	if (!*netdev) {
 		return -ENOENT;
 	}
@@ -129,11 +134,11 @@ static inline int tun_netdev_by_desc(const struct file_desc *fdesc,
 	return 0;
 }
 
-static struct idesc *tun_dev_open(struct node *node, struct file_desc *file_desc, int flags) {
+static struct idesc *tun_dev_open(struct dev_module *cdev, void *priv) {
 	struct net_device *netdev;
 	struct tun *tun;
 
-	netdev = tun_netdev_by_node(node);
+	netdev = tun_netdev_by_name(cdev->name);
 	if (!netdev) {
 		return err_ptr(ENOENT);
 	}
@@ -149,39 +154,38 @@ static struct idesc *tun_dev_open(struct node *node, struct file_desc *file_desc
 	}
 	tun_krnl_unlock(tun);
 
-	file_desc->file_info = netdev;
+	idesc_init(&tun_idesc, &tun_iops, S_IROTH | S_IWOTH);
 
-	return &file_desc->idesc;
+	return &tun_idesc;
 }
 
-static int tun_dev_close(struct file_desc *desc) {
+static void tun_dev_close(struct idesc *idesc) {
 	struct net_device *netdev;
 	struct tun *tun;
 	int err;
 
-	err = tun_netdev_by_desc(desc, &netdev, &tun);
+	err = tun_netdev_by_idesc(idesc, &netdev, &tun);
 	if (err) {
-		return err;
+		return;
 	}
 
 	tun_user_unlock(tun);
-
-	return 0;
 }
 
-static size_t tun_dev_read(struct file_desc *desc, void *buf, size_t size) {
+static ssize_t tun_dev_read(struct idesc *idesc, const struct iovec *iov, int cnt) {
 	struct waitq_link *wql = &thread_self()->schedee.waitq_link;
 	struct net_device *netdev;
 	struct tun *tun;
 	struct sk_buff *skb;
 	int err, ret;
 
-	err = tun_netdev_by_desc(desc, &netdev, &tun);
+	err = tun_netdev_by_idesc(idesc, &netdev, &tun);
 	if (err) {
 		return err;
 	}
 
-	if (size == 0) {
+	assert(iov);
+	if (cnt == 0) {
 		return -EINVAL;
 	}
 
@@ -195,9 +199,15 @@ static size_t tun_dev_read(struct file_desc *desc, void *buf, size_t size) {
 		tun_krnl_unlock(tun);
 
 		if (skb) {
-			int len = min(size, skb->len);
-			memcpy(buf, skb->mac.raw, len);
-			ret = len;
+			int len = skb->len;
+			unsigned char *raw = skb->mac.raw;
+			ret = 0;
+
+			for (int i = 0; i < cnt && len > 0; ++i) {
+				memcpy(iov[i].iov_base, raw, iov[i].iov_len);
+				len -= iov[i].iov_len;
+				ret += iov[i].iov_len;
+			}
 			break;
 		} else {
 			ret = sched_wait_timeout(SCHED_TIMEOUT_INFINITE, NULL);
@@ -207,29 +217,46 @@ static size_t tun_dev_read(struct file_desc *desc, void *buf, size_t size) {
 	return ret;
 }
 
-static size_t tun_dev_write(struct file_desc *desc, void *buf, size_t size) {
+static ssize_t tun_dev_write(struct idesc *idesc, const struct iovec *iov, int cnt) {
 	struct net_device *netdev;
 	struct tun *tun;
 	struct sk_buff *skb;
 	int err;
+	int ret = 0;
+	size_t size = 0;
+	unsigned char *raw;
 
-	err = tun_netdev_by_desc(desc, &netdev, &tun);
+	err = tun_netdev_by_idesc(idesc, &netdev, &tun);
 	if (err) {
 		return err;
 	}
 
+	assert(iov);
+	if (cnt == 0) {
+		return -EINVAL;
+	}
+	
+	for (int i = 0; i < cnt; ++i) {
+		size += iov[i].iov_len;
+	}
 	skb = skb_alloc(size + ETH_HLEN);
 	if (!skb) {
 		return -ENOMEM;
 	}
 
 	ethhdr_build(skb->mac.ethh, netdev->dev_addr, NULL, ETH_P_IP);
+	
+	raw = skb->mac.raw + ETH_HLEN;
+	for (int i = 0; i < cnt; ++i) {
+		memcpy(raw, iov[i].iov_base, iov[i].iov_len);
+		raw += iov[i].iov_len;
+		ret += iov[i].iov_len;
+	}
 
-	memcpy(skb->mac.raw + ETH_HLEN, buf, size);
 	skb->dev = netdev;
 	netif_rx(skb);
 
-	return 0;
+	return ret;
 }
 
 static void tun_deinit(void) {
@@ -253,6 +280,7 @@ static int tun_init(void) {
 
 	for (i = 0; i < TUN_N; i++) {
 		struct tun *tun;
+		struct dev_module *cdev;
 
 		snprintf(tun_name, sizeof(tun_name), "tun%d", i);
 
@@ -267,7 +295,15 @@ static int tun_init(void) {
 			goto err_netdev_free;
 		}
 
-		err = char_dev_register(tun_name, &tun_dev_file_ops, NULL);
+		cdev = pool_alloc(&cdev_tun_pool);
+		if (!cdev) {
+			return -ENOMEM;
+		}
+		memset(cdev, 0, sizeof(*cdev));
+		memcpy(cdev->name, tun_name, sizeof(cdev->name));
+		cdev->open = tun_dev_open;
+		cdev->dev_priv = tdev;
+		err = char_dev_register(cdev);
 		if (err != 0) {
 			goto err_inetdev_deregister;
 		}
