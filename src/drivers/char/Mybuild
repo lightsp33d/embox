@@ -14,6 +14,7 @@ abstract module char_dev {
 
 module char_dev_old extends char_dev {
 	option number cdev_idesc_quantity=32
+	option number idev_quantity=64
 	option number log_level=0
 
 	@IncludeExport(path="drivers")
