@@ -206,9 +206,11 @@ static ssize_t tun_dev_read(struct idesc *idesc, const struct iovec *iov, int cn
 			ret = 0;
 
 			for (int i = 0; i < cnt && len > 0; ++i) {
-				memcpy(iov[i].iov_base, raw, iov[i].iov_len);
-				len -= iov[i].iov_len;
-				ret += iov[i].iov_len;
+				int min_len = (len < iov[i].iov_len)? len : iov[i].iov_len;
+				memcpy(iov[i].iov_base, raw, min_len);
+				len -= min_len;
+				raw += min_len;
+				ret += min_len;
 			}
 			break;
 		} else {
