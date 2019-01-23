@@ -18,6 +18,7 @@
 #include <embox/unit.h>
 #include <util/err.h>
 #include <mem/misc/pool.h>
+#include <util/log.h>
 
 #include <kernel/thread/sync/mutex.h>
 #include <kernel/sched/sched_lock.h>
@@ -179,6 +180,7 @@ static ssize_t tun_dev_read(struct idesc *idesc, const struct iovec *iov, int cn
 	struct sk_buff *skb;
 	int err, ret;
 
+	log_debug("IN TUN READ");
 	err = tun_netdev_by_idesc(idesc, &netdev, &tun);
 	if (err) {
 		return err;
@@ -226,6 +228,7 @@ static ssize_t tun_dev_write(struct idesc *idesc, const struct iovec *iov, int c
 	size_t size = 0;
 	unsigned char *raw;
 
+	log_debug("IN TUN WRITE");
 	err = tun_netdev_by_idesc(idesc, &netdev, &tun);
 	if (err) {
 		return err;
