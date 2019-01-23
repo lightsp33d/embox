@@ -11,21 +11,21 @@ env:
     # Encrypted COVERITY_SCAN_TOKEN
     - secure: KKhG29VpIOr5mq9xHptpDSfFEcSRKB8BX4e5zL0VQNJGkrNAHJ7ba+boHKEmSJJ1fZvHC18XOb886BIsn0i+lFrVymYDR8L8ca3e/k26LktnqMn76ORK1WYkD1fiRg3lX25v/j0TkoLB7pmDnMhZyGzg20675V1sHbl/KCO1LJI=
   matrix:
-    - TEMPLATE=arm/qemu
-    - TEMPLATE=arm/stm32_f4
-    - TEMPLATE=x86/qemu
-    - TEMPLATE=x86/smp
-    - TEMPLATE=x86/user_apps
-    - TEMPLATE=x86/test/lang
-    - TEMPLATE=x86/test/fs
-    - TEMPLATE=x86/test/net
+#    - TEMPLATE=arm/qemu
+#    - TEMPLATE=arm/stm32_f4
+#    - TEMPLATE=x86/qemu
+#    - TEMPLATE=x86/smp
+#    - TEMPLATE=x86/user_apps
+#    - TEMPLATE=x86/test/lang
+#    - TEMPLATE=x86/test/fs
+#    - TEMPLATE=x86/test/net
     - TEMPLATE=x86/test/packetdrill
-    - TEMPLATE=x86/test/qt-vnc
-    - TEMPLATE=sparc/qemu
-    - TEMPLATE=mips/qemu
-    - TEMPLATE=ppc/qemu
-    - TEMPLATE=microblaze/qemu
-    - TEMPLATE=usermode86/debug
+#    - TEMPLATE=x86/test/qt-vnc
+#    - TEMPLATE=sparc/qemu
+#    - TEMPLATE=mips/qemu
+#    - TEMPLATE=ppc/qemu
+#    - TEMPLATE=microblaze/qemu
+#    - TEMPLATE=usermode86/debug
 #matrix:
 #  include:
 #  - env: UNCRUSTIFY
